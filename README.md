@@ -2,7 +2,7 @@
 
 This repository contains experimental code and results that underpin my thesis for a MSc in CSML @ UCL (to be released upon marking).
 
-In it, we study the potential benefits (sample efficiency and generalisation) of reasoning over syntactic representations of language instructions in the [`BabyAI`](https://github.com/mila-iqia/babyai) environment. We introduce a `BabyGIE` agent that uses a graph neural network to encode instruction representations from a syntax parser.
+In it, we study the potential benefits (sample efficiency and generalisation) of reasoning over syntactic representations of language instructions in the [`BabyAI`](https://github.com/mila-iqia/babyai) environment. We introduce a `BabyGIE` agent that uses a graph neural network (`GCN` or `GAT`) to encode instruction representations from a natural language dependency parser.
 
 # Technical Introduction
 
@@ -23,9 +23,12 @@ Our agent `BabyGIE` is built on top of the [`babyai`](https://github.com/mila-iq
 
 - `babyai/gie`: contains code for our syntactic dependency parser, `BabyGIE`-specific levels we've developed, and code to generate level train-test splits
 - `babyai/model.py`: adds definitions of our `GAT` and `GCN` models for graph-based language encoding. The main `ACModel` class is updated to incorporate these models as well as pre-trained word embedding initialisation (via HuggingFace's [Transformers](https://huggingface.co/transformers/) package).
-- `train_rl.py`: integrates [wandb](https://wandb.ai/), our instruction pre-processor, and some level initialisation code to support our new testing methodology
+- `scripts/train_rl.py`: integrates [wandb](https://wandb.ai/), our instruction pre-processor, and some level initialisation code to support our new testing methodology
 - `babyai/utils/format.py`: introduces a new observation pre-processor (`GieInstructionsPreprocessor`) that returns the syntactically parsed instructions and returns the mission tokens (enabling use of re-trained word embeddings)
-- `babyai/arguments.py`: adds GIE-specific arguments
+- `scripts/arguments.py`: adds GIE-specific arguments
+- `babyai/rl/algos/ppo.py`: adds a clipping parameter for the value loss; previously the clipping parameter for the surrogate loss function was used
+- `scripts/gie_evaluate.py`: enables visualisation of trained agents tested on typical BabyAI instructions, a custom instruction set to assess language understanding, and paraphrased instructions (note the latter should only be used with models trained with BERT (fixed or fine-tuned), otherwise the learnt embedding layer will assign a random embedding to out-of-vocabulary words in our paraphrased instructions, which can in turn result in an adversarial attack on the policy)
+- `babyai/levels/verifier.py`: adds custom sets of instructions to assess the language understanding of trained agents, and how they can generalise to syntactically-diverse, paraphrased instructions
 
 # Running
 
@@ -33,11 +36,26 @@ Our agent `BabyGIE` is built on top of the [`babyai`](https://github.com/mila-iq
 
 As documented and described in `arguments.py` (with some limited additional arguments in `scripts/train_rl.py`). Some key args to consider:
 
-- `instr-arch`: defines the instruction processor to use, such as `gru`, `attgru`, `gie`, `gie_gat`
-- `gie-aggr-method`: controls how instruction representations are aggregated — either `root` or `mean`
-- `gie-pretrained-emb`: either `random` (randomly initialised embedding layer, no pre-training) or `fast_bert`
+General training flags:
+
+- `env`: name of the environment to train on, such as `BabyAI-GoToObj-v0` (sample efficiency), `BabyAI-GoToObj_c-v0` (compositional generalisation), `BabyAI-PutNextLocal_d0_e` (sample efficiency), `BabyAI-PutNextLocal_d0_c` (compositional generalisation)
+- `instr-arch`: defines the instruction processor to use, such as `gru`, `attgru`, `gie_gcn`, `gie_gat`
+- `arch`: defines the image enbedding architecture, such as `film_endpool_res` (BabyAI 1.1), `film` (BabyAI 1.0), `cnn`
+- `lr`: step size of Adam optimiser [default: 1e-4]
+- `max-grad-norm`: maximum norm of the global loss function's gradient [default: 0.5]
+- `frames`: maximum number of training steps across actors [default: 100_000_000]
+- `seed`: seed controlling randomness in the training procedure (including train/test set split for the compositional generalisation experiment) [default: 1]
+- `test-seed`: seed for environment used for validation; this is incremented for each instruction / episode in the test batch [default: 1e9]
+- `test-episodes`: number of episodes to test on [default: 500]
+- `log-interval`: how often to output training metrics [default: 2]
+- `save-interval`: number of updates between saving and evaluating the trained model on test instructions. Note for `envs` ending in `_c`, compositional generalisation will be automatically evaluated; for normal BabyAI levels and envs ending in `_e`, sample efficiency will be evaluated [default: 10]
+- `clip-eps-value`: clipping coefficient for value loss [default: 0.2]
+
+GIE-specific flags:
+- `gie-aggr-method`: controls how instruction representations are aggregated — either `root`, `mean` or `max`
+- `gie-pretrained-emb`: either `random` (randomly initialised embedding layer, no pre-training), `tiny_bert` (128 dimensions), `distil_bert` & `bert` (768-dimensional but further projected to 128-dimensional via a linear layer)
 - `gie-message-rounds`: number of times to pass messages in the GNN
-- `gie-freeze-emb`: whether to freeze embedding layer or allow backpro to adjust gradients
+- `gie-freeze-emb`: whether to freeze embedding layer or allow backpro to adjust gradients. It is recommended to be used with bert embeddings
 
 ## Example launch
 
@@ -58,14 +76,57 @@ $ python -m scripts.train_rl --env BabyAI-GoToObj-v0 --arch film_endpool_res --i
 
 # Experimental results
 
-See XXX for an analysis of agent trajectories and behaviours.
+See [our Notion page](https://www.notion.so/Agent-Analysis-678a4693229542868f2d526e132df4cd) for a brief analysis of agent trajectories and behaviours.
 
 ## Experiment 1
-- `env` `BabyAI-GoToObj-v0`
-- `instr-arch` repeated over [`gru`, `attgru`, `gie`, `gie_gat`]
-- `seed` repeated over [1, 40, ...]
+Baseline agent with gru or attention-gru instruction encoder:
 
-TK
+- `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
+- `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
+- `instr-arch` repeated over [`gru`, `attgru`]
+- `seed` repeated over for each env [`1`, `40`, `365`, `961`]
+
+babyGIE agent with GCN or GAT instruction encoder:
+- `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
+- `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
+- `instr-arch` repeated over [`gie_gcn`, `gie_gat`]
+- `seed` repeated over [`1`, `40`, `365`, `961`, ...]
+- `lr` `5e-5`
+- `clip-eps-value` `0.0`
+- `batch-size` `640`
 
 ## Experiment 2
-TK
+Baseline agent with gru or attention-gru instruction encoder:
+
+- `env` repeated over [`BabyAI-GoToObj_c-v0`, `BabyAI-GoToLocal_c-v0`, `BabyAI-PutNextLocal_d0_c-v0`, `BabyAI-PutNextLocal_d2_c-v0`, `BabyAI-PutNextLocal_d4_c-v0`, `BabyAI-PutNextLocal_c-v0`]
+- `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
+- `instr-arch` repeated over [`gru`, `attgru`]
+- `seed` repeated over for each env [`1`, `40`, `365`, `961`]
+
+babyGIE agent with GCN or GAT instruction encoder:
+- `env` repeated over [`BabyAI-GoToObj_c-v0`, `BabyAI-GoToLocal_c-v0`, `BabyAI-PutNextLocal_d0_c-v0`, `BabyAI-PutNextLocal_d2_c-v0`, `BabyAI-PutNextLocal_d4_c-v0`, `BabyAI-PutNextLocal_c-v0`]
+- `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
+- `instr-arch` repeated over [`gie_gcn`, `gie_gat`]
+- `seed` repeated over [`1`, `40`, `365`, `961`, ...]
+- `lr` `5e-5`
+- `clip-eps-value` `0.0`
+- `batch-size` `640`
+
+## Experiment 3
+Baseline agent with gru or attention-gru instruction encoder:
+
+- `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
+- `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
+- `instr-arch` repeated over [`gru_bert`, `attgru_bert`]
+- `seed` repeated over for each env [`1`, `40`, `365`, `961`]
+
+babyGIE agent with GCN or GAT instruction encoder:
+- `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
+- `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
+- `instr-arch` repeated over [`gie_gcn`, `gie_gat`]
+- `gie-pretrained-emb` `tiny_bert`
+- `gie-freeze-emb`
+- `seed` repeated over [`1`, `40`, `365`, `961`, ...]
+- `lr` `5e-5`
+- `clip-eps-value` `0.0`
+- `batch-size` `640`
