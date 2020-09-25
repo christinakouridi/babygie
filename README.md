@@ -29,6 +29,7 @@ Our agent `BabyGIE` is built on top of the [`babyai`](https://github.com/mila-iq
 - `babyai/rl/algos/ppo.py`: adds a clipping parameter for the value loss; previously the clipping parameter for the surrogate loss function was used
 - `scripts/gie_evaluate.py`: enables visualisation of trained agents tested on typical BabyAI instructions, a custom instruction set to assess language understanding, and paraphrased instructions (note the latter should only be used with models trained with BERT (fixed or fine-tuned), otherwise the learnt embedding layer will assign a random embedding to out-of-vocabulary words in our paraphrased instructions, which can in turn result in an adversarial attack on the policy)
 - `babyai/levels/verifier.py`: adds custom sets of instructions to assess the language understanding of trained agents, and how they can generalise to syntactically-diverse, paraphrased instructions
+- `gym-minigrid/gym_minigrid/roomgrid.py`: adds function to populate grid with instruction objects and distractors from our custom compositional train-test splits
 
 # Running
 
@@ -130,3 +131,35 @@ babyGIE agent with GCN or GAT instruction encoder:
 - `seed` repeated over [`1`, `40`, `365`, `961`, ...]
 - `lr` `5e-5`
 - `clip-eps-value` `0.0`
+
+
+## Visualise agent trajectories
+Original instructions (support for any level):
+- `model` e.g. `BabyAI-PutNextLocal_d2_e-v0_ppo_film_endpool_res_gie_gcn_mem_seed40_20-09-19-23-12-27_best`
+- `env`  e.g. `BabyAI-PutNextLocal_d2_e-v0`
+- `instr-arch` should be the same as the trained model! i.e. `gie_gcn`
+- `test-episodes` `10`
+- `log-every` `1`
+- `seed` e.g. `40`
+- `exp` `original`
+
+Language understanding instruction sets (only support for `PutNextLocal` tasks):
+- `model` e.g. `BabyAI-PutNextLocal_d2_c-v0_ppo_film_endpool_res_gie_gcn_mem_seed40_20-09-19-23-12-27_best`
+- `env`  e.g. `BabyAI-PutNextLocal_n-v0`
+- `instr-arch` should be the same as the trained model! i.e. `gie_gcn`
+- `exp` `lang_understanding`
+- `num-dists` number of distractors e.g. `2`
+- `test-episodes` `10`
+- `log-every` `1`
+- `seed` e.g. `40`
+- `test-comp-set` in order to test on the compositional set, created using the seed above
+
+Paraphrased instructions (only for `BERT` models and `PutNextLocal` tasks):
+- `model` e.g. `BabyAI-PutNextLocal_d2_e-v0_ppo_film_endpool_res_gru_bert_mem_seed40_20-09-19-23-12-27_best`
+- `env`  e.g. `BabyAI-PutNextLocal_n-v0`
+- `instr-arch` should be the same as the trained model!  i.e.`gru_bert`
+- `exp` `paraphrases`
+- `num-dists` number of distractors e.g. `2`
+- `test-episodes` `10`
+- `log-every` `1`
+- `seed` e.g. `40`
