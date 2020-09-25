@@ -15,7 +15,7 @@ from gym.wrappers import Monitor
 
 # Parse arguments
 parser = argparse.ArgumentParser()
-parser.add_argument("--env", required=True,
+parser.add_argument("--env", required=True, default="BabyAI-PutNextLocal_n-v0",
                     help="name of the environment to be run (REQUIRED)")
 parser.add_argument("--model", default=None,
                     help="name of the trained model (REQUIRED or --demos-origin or --demos REQUIRED)")
@@ -37,7 +37,7 @@ parser.add_argument("--num-dists", type=int, default=0,
                     help="Number of distractor objects")
 parser.add_argument("--log-every", type=int, default=1,
                     help="How often to show agent performance on a test episode")
-parser.add_argument("--exp", type=str, default="lang_understanding",
+parser.add_argument("--exp", type=str, default="original",
                     help="Which experiment to run: lang_understanding or paraphrases")
 
 args = parser.parse_args()
@@ -86,8 +86,11 @@ model_path = utils.get_model_dir(args.model)
 for test_mode in test_modes:
 
     # Generate environment
-    env = gym.make(args.env, pairs_dict=pairs_dict, test_instr_mode=test_mode, num_dists=args.num_dists)
 
+    if "_n" in args.env:
+        env = gym.make(args.env, pairs_dict=pairs_dict, test_instr_mode=test_mode, num_dists=args.num_dists)
+    else:
+        env = gym.make(args.env)
 
     demo_path = os.path.join(model_path, test_mode)
     env = Monitor(env, demo_path, _check_log_this, force=True)

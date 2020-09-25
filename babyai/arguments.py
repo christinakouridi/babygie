@@ -39,7 +39,7 @@ class ArgumentParser(argparse.ArgumentParser):
         # Training arguments
         self.add_argument("--log-interval", type=int, default=2,
                             help="number of updates between two logs (default: 10)")
-        self.add_argument("--frames", type=int, default=int(150_000_000),
+        self.add_argument("--frames", type=int, default=int(100_000_000),
                             help="number of frames of training (default: 9e10)")
         self.add_argument("--patience", type=int, default=100,
                             help="patience for early stopping (default: 100)")
@@ -55,13 +55,13 @@ class ArgumentParser(argparse.ArgumentParser):
                             help="beta1 for Adam (default: 0.9)")
         self.add_argument("--beta2", type=float, default=0.999,
                             help="beta2 for Adam (default: 0.999)")
-        self.add_argument("--recurrence", type=int, default=20,
+        self.add_argument("--recurrence", type=int, default=10,
                             help="number of timesteps gradient is backpropagated (default: 20)")
         self.add_argument("--optim-eps", type=float, default=1e-5,
                             help="Adam and RMSprop optimizer epsilon (default: 1e-5)")
         self.add_argument("--optim-alpha", type=float, default=0.99,
                             help="RMSprop optimizer apha (default: 0.99)")
-        self.add_argument("--batch-size", type=int, default=1280,
+        self.add_argument("--batch-size", type=int, default=640,
                                 help="batch size for PPO (default: 1280)")
         self.add_argument("--entropy-coef", type=float, default=0.01,
                             help="entropy term coefficient (default: 0.01)")
@@ -79,7 +79,7 @@ class ArgumentParser(argparse.ArgumentParser):
                             help="arch to encode instructions, possible values: gru, bigru, conv, bow (default: gru)")
         self.add_argument("--no-mem", action="store_true", default=False,
                             help="don't use memory in the model")
-        self.add_argument("--arch", default='bow_endpool_res',
+        self.add_argument("--arch", default='film_endpool_res',
                             help="image embedding architecture")
 
         # GIE parameters
@@ -95,8 +95,6 @@ class ArgumentParser(argparse.ArgumentParser):
                           help="number of attention heads for gie gat (default:1)")
         self.add_argument("--gie-freeze-emb", action="store_true", default=False,
                           help="whether to freeze embeddings (default: False)")
-        self.add_argument("--no-clip-value-loss", action="store_true", default=False,
-                          help="don't clip the value loss (default: False)")
 
         # Validation / Test parameters
         self.add_argument("--test-env", default=None,

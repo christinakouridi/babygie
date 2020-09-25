@@ -48,7 +48,7 @@ parser.add_argument("--clip-eps-value", type=float, default=0.2,
                     help="clipping epsilon for value loss in  PPO (default: 0.2)")
 parser.add_argument("--ppo-epochs", type=int, default=4,
                     help="number of epochs for PPO (default: 4)")
-parser.add_argument("--save-interval", type=int, default=50,
+parser.add_argument("--save-interval", type=int, default=20,
                     help="number of updates between two saves (default: 50, 0 means no saving)")
 args = parser.parse_args()
 
@@ -92,7 +92,8 @@ for i in range(args.procs):
     env.seed(100 * args.seed + i)
     envs.append(env)
 
-ReturnsBuffer = deque(maxlen=10_000)
+# rolling mean success rate
+ReturnsBuffer = deque(maxlen=5_000)
 
 # Define obss preprocessor
 if 'emb' in args.arch:
@@ -133,8 +134,7 @@ if args.algo == "ppo":
                              args.gae_lambda,
                              args.entropy_coef, args.value_loss_coef, args.max_grad_norm, args.recurrence,
                              args.optim_eps, args.clip_eps_policy, args.clip_eps_value, args.ppo_epochs,
-                             args.batch_size, obss_preprocessor, reshape_reward, savelog_missions=args.savelog_missions,
-                             no_clip_value_loss=args.no_clip_value_loss)
+                             args.batch_size, obss_preprocessor, reshape_reward, savelog_missions=args.savelog_missions)
 else:
     raise ValueError("Incorrect algorithm name: {}".format(args.algo))
 
@@ -173,24 +173,8 @@ if args.write_csv:
     if first_created:
         csv_writer.writerow(header)
 
-# Log code state, command, availability of CUDA and model
+# Log args, availability of CUDA and model
 
-babyai_code = list(babyai.__path__)[0]
-# try:
-#     last_commit = subprocess.check_output(
-#         'cd {}; git log -n1'.format(babyai_code), shell=True).decode('utf-8')
-#     logger.info('LAST COMMIT INFO:')
-#     logger.info(last_commit)
-# except subprocess.CalledProcessError:
-#     logger.info('Could not figure out the last commit')
-# try:
-#     diff = subprocess.check_output(
-#         'cd {}; git diff'.format(babyai_code), shell=True).decode('utf-8')
-#     if diff:
-#         logger.info('GIT DIFF:')
-#         logger.info(diff)
-# except subprocess.CalledProcessError:
-#     logger.info('Could not figure out the last commit')
 logger.info('COMMAND LINE ARGS:')
 logger.info(args)
 logger.info("CUDA available: {}".format(torch.cuda.is_available()))
@@ -207,7 +191,7 @@ if "gie" in args.instr_arch:
             ('F' if args.gie_freeze_emb else 'NF') + '_' + \
             ('' if 'att' in args.instr_arch else args.gie_aggr_method + '_') + \
             str(args.gie_message_rounds) + 'M' + '_' + \
-            ('' if args.no_clip_value_loss else str(args.clip_eps_value) + '_') + \
+            ('' if args.clip_eps_value == -1 else str(args.clip_eps_value) + '_') + \
             ('' if args.gie_two_layers == False else '2L' + '_') + \
             ('' if args.gie_heads == 1 else str(args.gie_heads) + 'H' + '_')
 else:
@@ -338,9 +322,7 @@ while status['num_frames'] < args.frames:
         if save_model:
             utils.save_model(acmodel, args.model + '_best')
             obss_preprocessor.vocab.save(utils.get_vocab_path(args.model + '_best'))
-
-            # TODO: save embedding layer but link to vocab
-            # utils.save_embeddings(acmodel, args.model + '_best')
+            utils.save_embeddings(acmodel, args.model + '_best')
 
             logger.info("Return {: .2f}; best model is saved".format(mean_return))
             logger.info("Return Std {: .2f}; best model is saved".format(std_return))

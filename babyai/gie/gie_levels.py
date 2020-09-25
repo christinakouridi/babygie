@@ -6,7 +6,7 @@ from nltk import corpus
 import re, string
 CHRS = 'abcdefghijklmnopqrstuvwxyz'
 
-# EFFICIENCY
+# EXP1: EFFICIENCY
 
 class Level_PutNextLocal_d0_e(RoomGridLevel):
     """
@@ -37,7 +37,7 @@ class Level_PutNextLocal_d0_e(RoomGridLevel):
 class Level_PutNextLocal_d2_e(RoomGridLevel):
     """
     Put an object next to another object, inside a single room
-    with no doors, no distractors
+    with no doors, two distractors
     """
 
     def __init__(self, room_size=8, num_objs=4, seed=None):
@@ -63,7 +63,7 @@ class Level_PutNextLocal_d2_e(RoomGridLevel):
 class Level_PutNextLocal_d4_e(RoomGridLevel):
     """
     Put an object next to another object, inside a single room
-    with no doors, no distractors
+    with no doors, four distractors
     """
 
     def __init__(self, room_size=8, num_objs=6, seed=None):
@@ -86,7 +86,7 @@ class Level_PutNextLocal_d4_e(RoomGridLevel):
             ObjDesc(o2.type, o2.color)
         )
 
-# COMPOSITIONAL
+# EXP2: COMPOSITIONAL
 
 class Level_GoToObj_c(RoomGridLevel):
     """
@@ -115,7 +115,7 @@ class Level_GoToObj_c(RoomGridLevel):
 
 class Level_GoToLocal_c(RoomGridLevel):
     """
-    Go to an object, inside a single room with no doors, no distractors
+    Go to an object, inside a single room with no doors, seven distractors
     """
 
     def __init__(self, room_size=8, seed=None, pairs_dict=None, test_mode=None):
@@ -208,7 +208,7 @@ class Level_PutNextLocal_d2_c(RoomGridLevel):
 class Level_PutNextLocal_d4_c(RoomGridLevel):
     """
     Put an object next to another object, inside a single room
-    with two distractors, no doors
+    with four distractors, no doors
     """
 
     def __init__(self, room_size=8, seed=None, pairs_dict=None, test_mode=None):
@@ -240,7 +240,7 @@ class Level_PutNextLocal_d4_c(RoomGridLevel):
 class Level_PutNextLocal_d6_c(RoomGridLevel):
     """
     Put an object next to another object, inside a single room
-    with two distractors, no doors
+    with six distractors, no doors
     """
 
     def __init__(self, room_size=8, seed=None, pairs_dict=None, test_mode=None):
@@ -269,7 +269,8 @@ class Level_PutNextLocal_d6_c(RoomGridLevel):
         )
 
 
-# NATURAL LANGUAGE
+# EXP3: NATURAL LANGUAGE
+
 class Level_PutNextLocal_n(RoomGridLevel):
     """
     Put an object next to another object, inside a single room
@@ -294,11 +295,7 @@ class Level_PutNextLocal_n(RoomGridLevel):
         )
 
     def _set_test_vocab(self):
-        # TODO: adjust this to respect format's max vocab size
         # Conservatively set the vocab size because we'll add object properties and colours to the vocab too
-
-        # Alternative to consider: sample based on the frequency distribution of words.
-        # Eg take the median frequency value, generate a distribution around this value, and sample from that
         pattern = re.compile("[\d{}]+$".format(re.escape(string.punctuation)))
         test_grammatical_vocab = []
 

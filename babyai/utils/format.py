@@ -128,7 +128,11 @@ class GieInstructionsPreprocessor(object):
                 local_edges_idx, global_words_idx, depth = self.parser_history.get(mission)
             else:
                 local_edges_idx, _, depth = self.parser.parse(mission)
-                
+
+                # a fixed linguistic structure for PutNextLocal
+                # local_edges_idx = [(3, 0), (1, 3), (2, 3), (4, 3), (5, 4), (8, 5), (6, 8), (7, 8)]
+                # depth = 5
+
                 global_words_idx = [self.vocab[word] for word in mission_tokens]
 
                 num_nodes = len(mission_tokens)

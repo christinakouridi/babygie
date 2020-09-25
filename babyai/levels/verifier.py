@@ -36,8 +36,6 @@ LOC_NAMES = ['left', 'right', 'front', 'behind']
 use_done_actions = os.environ.get('BABYAI_DONE_ACTIONS', False)
 
 
-
-
 class Paraphraser:
     def __init__(self):
         self.cfg = CFG.fromstring(PARAPHRASED_CFG)

@@ -476,7 +476,7 @@ class ACModel(nn.Module, babyai.rl.RecurrentACModel):
                 if self.res:
                     out += x
                 x = out
-
+            # note: results are still wip so film2 architecture liable to change
             if 'film2' in self.arch:
                 x = x.max(3)[0].max(2)[0]
             else:
@@ -552,15 +552,15 @@ class ACModel(nn.Module, babyai.rl.RecurrentACModel):
             # reshape from [batch_size * n_nodes, instr_dim] -> [batch_size, n_nodes, instr_dim]
             gie_embeddings_reshaped = gie_embeddings.view(batch.num_graphs, -1, batch.num_features)
 
-            # return average of node embeddings if 'mean' otherwise root embedding
-            if "att" in self.lang_model:
+
+            if "att" in self.lang_model: # return all node features when the BabyAI attention (as for att-gru) is used
                 return gie_embeddings_reshaped
             else:
-                if self.gie_aggr_method == "mean":
+                if self.gie_aggr_method == "mean": # average node embeddings
                     return torch.mean(gie_embeddings_reshaped, dim=1)
-                elif self.gie_aggr_method == "root":
+                elif self.gie_aggr_method == "root": # take feature of root node
                     return gie_embeddings_reshaped[:, 0, :]
-                elif self.gie_aggr_method == "max":
+                elif self.gie_aggr_method == "max": # take max node feature based on L2 norm
                     idxs = torch.norm(gie_embeddings_reshaped, dim=2).argmax(dim=1)
                     return torch.gather(gie_embeddings_reshaped, 1, idxs.unsqueeze(-1).repeat(1, self.instr_dim).unsqueeze(1))[:, 0, :]
 
@@ -613,8 +613,7 @@ class ACModel(nn.Module, babyai.rl.RecurrentACModel):
                 if 'bert' not in self.lang_model:
                     x = self.word_embedding(instr)
 
-                inputs = x # self.word_embedding(instr)
-                inputs = inputs[perm_idx]
+                inputs = x[perm_idx]
 
                 inputs = pack_padded_sequence(inputs, seq_lengths.data.cpu().numpy(), batch_first=True)
 

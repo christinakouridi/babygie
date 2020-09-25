@@ -16,7 +16,7 @@ class PPOAlgo(BaseAlgo):
                  gae_lambda=0.95,
                  entropy_coef=0.01, value_loss_coef=0.5, max_grad_norm=0.5, recurrence=4,
                  adam_eps=1e-5, clip_eps_policy=0.2, clip_eps_value=0.2, epochs=4, batch_size=256, preprocess_obss=None,
-                 reshape_reward=None, aux_info=None, no_clip_value_loss=False, savelog_missions=False):
+                 reshape_reward=None, aux_info=None, savelog_missions=False):
         num_frames_per_proc = num_frames_per_proc or 128
 
         super().__init__(envs, acmodel, num_frames_per_proc, discount, lr, gae_lambda, entropy_coef,
@@ -25,7 +25,6 @@ class PPOAlgo(BaseAlgo):
 
         self.clip_eps_policy = clip_eps_policy
         self.clip_eps_value = clip_eps_value
-        self.no_clip_value_loss = no_clip_value_loss
         self.savelog_missions = savelog_missions
 
         self.epochs = epochs
@@ -131,7 +130,7 @@ class PPOAlgo(BaseAlgo):
                     surr2 = torch.clamp(ratio, 1.0 - self.clip_eps_policy, 1.0 + self.clip_eps_policy) * sb.advantage
                     policy_loss = -torch.min(surr1, surr2).mean()
 
-                    if self.no_clip_value_loss:
+                    if self.clip_eps_value == -1:
                         value_clipped = value
                     else:
                         value_clipped = sb.value + torch.clamp(value - sb.value, -self.clip_eps_value, self.clip_eps_value)
