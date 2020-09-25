@@ -39,23 +39,23 @@ As documented and described in `arguments.py` (with some limited additional argu
 General training flags:
 
 - `env`: name of the environment to train on, such as `BabyAI-GoToObj-v0` (sample efficiency), `BabyAI-GoToObj_c-v0` (compositional generalisation), `BabyAI-PutNextLocal_d0_e` (sample efficiency), `BabyAI-PutNextLocal_d0_c` (compositional generalisation)
-- `instr-arch`: defines the instruction processor to use, such as `gru`, `attgru`, `gie_gcn`, `gie_gat`
-- `arch`: defines the image enbedding architecture, such as `film_endpool_res` (BabyAI 1.1), `film` (BabyAI 1.0), `cnn`
-- `lr`: step size of Adam optimiser [default: 1e-4]
-- `max-grad-norm`: maximum norm of the global loss function's gradient [default: 0.5]
-- `frames`: maximum number of training steps across actors [default: 100_000_000]
-- `seed`: seed controlling randomness in the training procedure (including train/test set split for the compositional generalisation experiment) [default: 1]
-- `test-seed`: seed for environment used for validation; this is incremented for each instruction / episode in the test batch [default: 1e9]
-- `test-episodes`: number of episodes to test on [default: 500]
-- `log-interval`: how often to output training metrics [default: 2]
+- `instr-arch`: defines the instruction processor to use, such as `gru`, `attgru`, `gie_gcn`, `gie_gat` [default:`gru`]
+- `arch`: defines the image enbedding architecture, such as `film_endpool_res` (BabyAI 1.1), `film` (BabyAI 1.0), `cnn` [default:`film_endpool_res`]
+- `lr`: step size of Adam optimiser [default: `1e-4`]
+- `max-grad-norm`: maximum norm of the global loss function's gradient [default: `0.5`]
+- `frames`: maximum number of training steps across actors [default: `100_000_000`]
+- `seed`: seed controlling randomness in the training procedure (including train/test set split for the compositional generalisation experiment) [default: `1`]
+- `test-seed`: seed for environment used for validation; this is incremented for each instruction / episode in the test batch [default: `1e9`]
+- `test-episodes`: number of episodes to test on [default: `500`]
+- `log-interval`: how often to output training metrics [default: `2`]
 - `save-interval`: number of updates between saving and evaluating the trained model on test instructions. Note for `envs` ending in `_c`, compositional generalisation will be automatically evaluated; for normal BabyAI levels and envs ending in `_e`, sample efficiency will be evaluated [default: 10]
-- `clip-eps-value`: clipping coefficient for value loss [default: 0.2]
+- `clip-eps-value`: clipping coefficient for value loss [default: `0.2`]
 
 GIE-specific flags:
-- `gie-aggr-method`: controls how instruction representations are aggregated — either `root`, `mean` or `max`
-- `gie-pretrained-emb`: either `random` (randomly initialised embedding layer, no pre-training), `tiny_bert` (128 dimensions), `distil_bert` & `bert` (768-dimensional but further projected to 128-dimensional via a linear layer)
-- `gie-message-rounds`: number of times to pass messages in the GNN
-- `gie-freeze-emb`: whether to freeze embedding layer or allow backpro to adjust gradients. It is recommended to be used with bert embeddings
+- `gie-aggr-method`: controls how instruction representations are aggregated — either `root`, `mean` or `max` [default: `root`]
+- `gie-pretrained-emb`: either `random` (randomly initialised embedding layer, no pre-training), `tiny_bert` (128-dimensional embeddings), `distil_bert` & `bert` (768-dimensional embeddings but further projected to 128-dimensional representations via a linear layer) [default: `random`]
+- `gie-message-rounds`: number of times to pass messages in the GNN [default: `2`]
+- `gie-freeze-emb`: whether to freeze embedding layer or allow backpropagation to adjust gradients. It is recommended to enable this flag with bert [default: `False`]
 
 ## Example launch
 
@@ -71,7 +71,7 @@ $ python3 -m scripts.train_rl --env BabyAI-GoToObj-v0 --arch film_endpool_res --
 ### Locally
 ```bash
 $ cd babygie
-$ python -m scripts.train_rl --env BabyAI-GoToObj-v0 --arch film_endpool_res --instr-arch gie --log-interval 2 --save-interval 20 --frames 300_000 --seed 1
+$ python -m scripts.train_rl --env BabyAI-GoToObj-v0 --instr-arch gie_gcn --frames 300_000
 ```
 
 # Experimental results
@@ -84,6 +84,7 @@ Baseline agent with gru or attention-gru instruction encoder:
 - `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
 - `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
 - `instr-arch` repeated over [`gru`, `attgru`]
+- `batch-size` `1280`
 - `seed` repeated over for each env [`1`, `40`, `365`, `961`]
 
 babyGIE agent with GCN or GAT instruction encoder:
@@ -93,14 +94,14 @@ babyGIE agent with GCN or GAT instruction encoder:
 - `seed` repeated over [`1`, `40`, `365`, `961`, ...]
 - `lr` `5e-5`
 - `clip-eps-value` `0.0`
-- `batch-size` `640`
 
-## Experiment 2
+## Experiment 2
 Baseline agent with gru or attention-gru instruction encoder:
 
 - `env` repeated over [`BabyAI-GoToObj_c-v0`, `BabyAI-GoToLocal_c-v0`, `BabyAI-PutNextLocal_d0_c-v0`, `BabyAI-PutNextLocal_d2_c-v0`, `BabyAI-PutNextLocal_d4_c-v0`, `BabyAI-PutNextLocal_c-v0`]
 - `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
 - `instr-arch` repeated over [`gru`, `attgru`]
+- `batch-size` `1280`
 - `seed` repeated over for each env [`1`, `40`, `365`, `961`]
 
 babyGIE agent with GCN or GAT instruction encoder:
@@ -110,14 +111,14 @@ babyGIE agent with GCN or GAT instruction encoder:
 - `seed` repeated over [`1`, `40`, `365`, `961`, ...]
 - `lr` `5e-5`
 - `clip-eps-value` `0.0`
-- `batch-size` `640`
 
-## Experiment 3
+## Experiment 3
 Baseline agent with gru or attention-gru instruction encoder:
 
 - `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
 - `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
 - `instr-arch` repeated over [`gru_bert`, `attgru_bert`]
+- `batch-size` `1280`
 - `seed` repeated over for each env [`1`, `40`, `365`, `961`]
 
 babyGIE agent with GCN or GAT instruction encoder:
@@ -129,4 +130,3 @@ babyGIE agent with GCN or GAT instruction encoder:
 - `seed` repeated over [`1`, `40`, `365`, `961`, ...]
 - `lr` `5e-5`
 - `clip-eps-value` `0.0`
-- `batch-size` `640`
