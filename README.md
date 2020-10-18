@@ -64,7 +64,7 @@ GIE-specific flags:
 ```bash
 $ cd babygie
 $ sudo docker build . -t babygie-image
-$ sudo docker run --gpus all -dit -P --name babygie -v <LOCAL_MODEL_DIR>:/models babygie-image
+$ sudo docker run --gpus all -dit --name babygie -v <LOCAL_MODEL_DIR>:/models babygie-image
 $ docker attach <PID>
 $ python3 -m scripts.train_rl --env BabyAI-GoToObj-v0 --arch film_endpool_res --instr-arch gie --log-interval 2 --save-interval 20 --frames 300_000 --seed 1
 ```
