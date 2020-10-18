@@ -7,13 +7,11 @@ In it, we study the potential benefits (sample efficiency and generalisation) of
 # Technical Introduction
 
 ## Installation
+There are few important notes to sequence environment setup correctly:
 
-Most easily accomplished using the included `Dockerfile`.
-
-If you choose to install without Docker, a few important notes to sequence correctly:
-
-- In a fresh virtual env, install `torch` and `torchvision`
-- Then follow the [torch-geometric setup instructions](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) (note the need to specify Torch and CUDA versions to set up correctly)
+- In a fresh virtual env, install Python 3.8
+- Install `torch==1.5.1` and `torchvision==0.6.1`
+- Then follow the [torch-geometric setup instructions](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html) (note the need to specify Torch and CUDA versions to set up correctly, e.g. `CUDA=cu102 and TORCH=1.5.0`)
 - `pip install -r requirements.txt` to install key remaining dependencies
 - Finish by locally installing `gym-minigrid` (included in this repo) rather than the version hosted on pip -- there are a couple of breaking changes in the pypi version
 
@@ -60,16 +58,6 @@ GIE-specific flags:
 
 ## Example launch
 
-### Docker
-```bash
-$ cd babygie
-$ sudo docker build . -t babygie-image
-$ sudo docker run --gpus all -dit --name babygie -v <LOCAL_MODEL_DIR>:/models babygie-image
-$ docker attach <PID>
-$ python3 -m scripts.train_rl --env BabyAI-GoToObj-v0 --arch film_endpool_res --instr-arch gie --log-interval 2 --save-interval 20 --frames 300_000 --seed 1
-```
-
-### Locally
 ```bash
 $ cd babygie
 $ python -m scripts.train_rl --env BabyAI-GoToObj-v0 --instr-arch gie_gcn --frames 300_000
