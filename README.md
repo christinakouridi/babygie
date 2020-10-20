@@ -68,7 +68,7 @@ $ python -m scripts.train_rl --env BabyAI-GoToObj-v0 --instr-arch gie_gcn --fram
 See [our Notion page](https://www.notion.so/Agent-Analysis-678a4693229542868f2d526e132df4cd) for a brief analysis of agent trajectories and behaviours.
 
 ## Experiment 1
-Baseline agent with gru or attention-gru instruction encoder:
+Baseline agent with gru or attention-gru instruction encoder. To replicate our results, run `scripts.train_rl.py` with the below hyperparameter settings:
 
 - `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
 - `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
@@ -85,7 +85,7 @@ babyGIE agent with GCN or GAT instruction encoder:
 - `clip-eps-value` `0.0`
 
 ## Experiment 2
-Baseline agent with gru or attention-gru instruction encoder:
+Baseline agent with gru or attention-gru instruction encoder. To replicate our results, run `scripts.train_rl.py` with the below hyperparameter settings:
 
 - `env` repeated over [`BabyAI-GoToObj_c-v0`, `BabyAI-GoToLocal_c-v0`, `BabyAI-PutNextLocal_d0_c-v0`, `BabyAI-PutNextLocal_d2_c-v0`, `BabyAI-PutNextLocal_d4_c-v0`, `BabyAI-PutNextLocal_c-v0`]
 - `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
@@ -102,7 +102,7 @@ babyGIE agent with GCN or GAT instruction encoder:
 - `clip-eps-value` `0.0`
 
 ## Experiment 3
-Baseline agent with gru or attention-gru instruction encoder:
+Baseline agent with gru or attention-gru instruction encoder. To replicate our results, run `scripts.train_rl.py` with the below hyperparameter settings:
 
 - `env` repeated over [`BabyAI-GoToObj-v0`, `BabyAI-GoToLocal-v0`, `BabyAI-PutNextLocal_d0_e-v0`, `BabyAI-PutNextLocal_d2_e-v0`, `BabyAI-PutNextLocal_d4_e-v0`, `BabyAI-PutNextLocal-v0`]
 - `frames` repeated over for each env respectively [300_000, 25_000_000, 7_000_000, 30_000_000, 80_000_000, 100_000_000] 
@@ -122,6 +122,8 @@ babyGIE agent with GCN or GAT instruction encoder:
 
 
 ## Visualise agent trajectories
+To evaluate trained models on various instructions sets and visualise agent trajectories, use `scripts.gie_evaluate.py`. Example hyperpameters:
+
 Original instructions (support for any level):
 - `model` e.g. `BabyAI-PutNextLocal_d2_e-v0_ppo_film_endpool_res_gie_gcn_mem_seed40_20-09-19-23-12-27_best`
 - `env`  e.g. `BabyAI-PutNextLocal_d2_e-v0`
